@@ -34,6 +34,9 @@ async fn main() {
     let texture = Texture2D::from_file_with_format( include_bytes!("../assets/sprites/yoshi-32-box.png"), None);
     
     texture.set_filter(FilterMode::Nearest);
+
+    // TODO render level with sprites
+    // Firstly, do this in main, after that move this logic to a separate function
     
     loop {
         clear_background(WHITE);
