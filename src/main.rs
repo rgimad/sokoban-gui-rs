@@ -2,8 +2,34 @@
 
 use macroquad::prelude::*;
 
-#[macroquad::main("BasicShapes")]
+/*
+    # - wall
+    . - floor
+    $ - $ - container
+    ~ - target
+    @ - player
+    * - container on target
+    + - player on target
+*/
+
+macro_rules! string_vec {
+    ($($x:expr),* $(,)?) => {
+        vec![$($x.to_string()),*]
+    };
+}
+
+
+#[macroquad::main("Sokoban")]
 async fn main() {
+
+    let level = string_vec![
+        "#######",
+        "#~....#",
+        "#.$...#",
+        "#.@...#",
+        "#######"
+    ];
+
     loop {
         clear_background(WHITE);
 
