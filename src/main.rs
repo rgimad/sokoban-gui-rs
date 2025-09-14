@@ -1,4 +1,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+#![allow(unused_variables)]
 
 use macroquad::prelude::*;
 
@@ -30,14 +31,15 @@ async fn main() {
         "#######"
     ];
 
+    let texture = Texture2D::from_file_with_format( include_bytes!("../assets/sprites/yoshi-32-box.png"), None);
+    
+    texture.set_filter(FilterMode::Nearest);
+    
     loop {
         clear_background(WHITE);
-
-        draw_line(40.0, 40.0, 100.0, 200.0, 15.0, BLUE);
-        draw_rectangle(screen_width() / 2.0 - 60.0, 100.0, 120.0, 60.0, GREEN);
-
-        draw_text("IT WORKS!", 20.0, 20.0, 30.0, DARKGRAY);
-
-        next_frame().await 
+        
+        draw_texture(&texture, 50.0, 70.0, WHITE);
+        
+        next_frame().await;
     }
 }
