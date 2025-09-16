@@ -19,7 +19,6 @@ macro_rules! string_vec {
     };
 }
 
-
 #[macroquad::main("Sokoban")]
 async fn main() {
 
@@ -76,7 +75,6 @@ async fn main() {
                     '+' => {
                         cell_texture = &texture_player_on_target;
                     },
-                    // TODO other types of cells
                     _ => {},
                 }
                 draw_texture(cell_texture, START_X + col_idx as f32 * texture_wall.width(), START_Y + row_idx as f32 * texture_wall.height(), WHITE);
