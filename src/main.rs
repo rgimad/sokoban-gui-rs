@@ -36,7 +36,9 @@ async fn main() {
     let texture_floor = Texture2D::from_file_with_format( include_bytes!("../assets/sprites/yoshi-32-floor.png"), None);
     let texture_target = Texture2D::from_file_with_format( include_bytes!("../assets/sprites/yoshi-32-dock.png"), None);
     let texture_box = Texture2D::from_file_with_format( include_bytes!("../assets/sprites/yoshi-32-box.png"), None);
+    let texture_box_on_target = Texture2D::from_file_with_format( include_bytes!("../assets/sprites/yoshi-32-box-docked.png"), None);
     let texture_player = Texture2D::from_file_with_format( include_bytes!("../assets/sprites/yoshi-32-worker.png"), None);
+    let texture_player_on_target = Texture2D::from_file_with_format( include_bytes!("../assets/sprites/yoshi-32-worker-docked.png"), None);
 
     println!("{} {}", texture_wall.width(), texture_wall.height());
 
@@ -65,8 +67,14 @@ async fn main() {
                     '$' => {
                         cell_texture = &texture_box;
                     },
+                    '*' => {
+                        cell_texture = &texture_box_on_target;
+                    },
                     '@' => {
                         cell_texture = &texture_player;
+                    },
+                    '+' => {
+                        cell_texture = &texture_player_on_target;
                     },
                     // TODO other types of cells
                     _ => {},
