@@ -197,7 +197,23 @@ async fn main() {
 
     loop {
         clear_background(WHITE);
-        
+
+        if is_key_pressed(KeyCode::Left) {
+            println!("Left");  // TODO
+        }
+
+        if is_key_pressed(KeyCode::Right) {
+            println!("Right"); // TODO
+        }
+
+        if is_key_pressed(KeyCode::Down) {
+            println!("Down"); // TODO
+        }
+
+        if is_key_pressed(KeyCode::Up) {
+            println!("Up"); // TODO
+        }
+
         game.update();
         game.render();
         
