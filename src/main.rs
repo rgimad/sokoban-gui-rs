@@ -96,31 +96,31 @@ impl Game {
 
         let textures = GameTextures {
             wall: Texture2D::from_file_with_format(
-                include_bytes!("../assets/sprites/yoshi-32-wall.png"),
+                include_bytes!("../assets/sprites/lager-20-wall.png"),
                 None,
             ),
             floor: Texture2D::from_file_with_format(
-                include_bytes!("../assets/sprites/yoshi-32-floor.png"),
+                include_bytes!("../assets/sprites/lager-20-floor.png"),
                 None,
             ),
             target: Texture2D::from_file_with_format(
-                include_bytes!("../assets/sprites/yoshi-32-dock.png"),
+                include_bytes!("../assets/sprites/lager-20-dock.png"),
                 None,
             ),
             crate_texture: Texture2D::from_file_with_format(
-                include_bytes!("../assets/sprites/yoshi-32-box.png"),
+                include_bytes!("../assets/sprites/lager-20-box.png"),
                 None,
             ),
             crate_on_target: Texture2D::from_file_with_format(
-                include_bytes!("../assets/sprites/yoshi-32-box-docked.png"),
+                include_bytes!("../assets/sprites/lager-20-box-docked.png"),
                 None,
             ),
             player: Texture2D::from_file_with_format(
-                include_bytes!("../assets/sprites/yoshi-32-worker.png"),
+                include_bytes!("../assets/sprites/lager-20-worker.png"),
                 None,
             ),
             player_on_target: Texture2D::from_file_with_format(
-                include_bytes!("../assets/sprites/yoshi-32-worker-docked.png"),
+                include_bytes!("../assets/sprites/lager-20-worker-docked.png"),
                 None,
             ),
         };
@@ -154,11 +154,18 @@ impl Game {
                         _ => &self.textures.floor, // Default to floor for unknown characters
                     };
                     
-                    draw_texture(
+                    draw_texture_ex(
                         cell_texture,
-                        LEVEL_SCREEN_POS_X + x as f32 * self.textures.wall.width(),
-                        LEVEL_SCREEN_POS_Y + y as f32 * self.textures.wall.height(),
+                        LEVEL_SCREEN_POS_X + x as f32 * self.textures.wall.width() * 1.5,
+                        LEVEL_SCREEN_POS_Y + y as f32 * self.textures.wall.height() * 1.5,
                         WHITE,
+                        DrawTextureParams {
+                            dest_size: Some(Vec2::new(
+                                self.textures.wall.width() * 1.5,
+                                self.textures.wall.height() * 1.5,
+                            )),
+                            ..Default::default()
+                        },
                     );
                 }
             }
