@@ -235,12 +235,40 @@ impl Game {
         }
         let next_pos = (next_pos.0 as usize, next_pos.1 as usize);
         let cell_next_pos = self.level.get_cell(next_pos.0, next_pos.1).unwrap();
-        match cell_next_pos {
-            '.' => {
-                // TODO
+        match cell_prev_pos {
+            '@' => {
+                match cell_next_pos {
+                    '.' => {
+                        self.level.set_cell(next_pos.0, next_pos.1, '@').unwrap();
+                        self.level.set_cell(prev_pos.0, prev_pos.1, '.').unwrap();
+                        self.player_pos = next_pos;
+                    },
+                    '~' => {
+                        self.level.set_cell(next_pos.0, next_pos.1, '+').unwrap();
+                        self.level.set_cell(prev_pos.0, prev_pos.1, '.').unwrap();
+                        self.player_pos = next_pos;
+                    },
+                    _ => {},
+                }
+            },
+            '+' => {
+                match cell_next_pos {
+                    '.' => {
+                        self.level.set_cell(next_pos.0, next_pos.1, '@').unwrap();
+                        self.level.set_cell(prev_pos.0, prev_pos.1, '~').unwrap();
+                        self.player_pos = next_pos;
+                    },
+                    '~' => {
+                        self.level.set_cell(next_pos.0, next_pos.1, '+').unwrap();
+                        self.level.set_cell(prev_pos.0, prev_pos.1, '~').unwrap();
+                        self.player_pos = next_pos;
+                    },
+                    _ => {},
+                }
             },
             _ => {},
         }
+        
         // match dir {
         //     Direction::Left => {
 
