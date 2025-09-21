@@ -52,34 +52,45 @@ impl GameLevel {
         }
     }
 
-    fn get_cell(&self, x: usize, y: usize) -> Option<char> {
-        if x < self.width && y < self.height {
-            self.data[y].chars().nth(x)
+    fn get_cell(&self, row: usize, col: usize) -> Option<char> {
+        if col < self.width && row < self.height {
+            self.data[row].chars().nth(col)
         } else {
             None
         }
     }
 
-    fn set_cell(&mut self, x: usize, y: usize, cell: char) -> Result<(), &'static str> {
-        if x >= self.width || y >= self.height {
+    fn set_cell(&mut self, row: usize, col: usize, cell: char) -> Result<(), &'static str> {
+        if col >= self.width || row >= self.height {
             return Err("Coordinates out of bounds");
         }
 
-        let mut row_chars: Vec<char> = self.data[y].chars().collect();
-        row_chars[x] = cell;
-        self.data[y] = row_chars.into_iter().collect();
+        let mut row_chars: Vec<char> = self.data[row].chars().collect();
+        row_chars[col] = cell;
+        self.data[row] = row_chars.into_iter().collect();
         
         Ok(())
     }
 
-    fn is_valid_position(&self, x: usize, y: usize) -> bool {
-        x < self.width && y < self.height
+    fn is_valid_position(&self, row: usize, col: usize) -> bool {
+        col < self.width && row < self.height
     }
+}
+
+struct GameTextures {
+    wall: Texture2D,
+    floor: Texture2D,
+    target: Texture2D,
+    crate_texture: Texture2D,
+    crate_on_target: Texture2D,
+    player: Texture2D,
+    player_on_target: Texture2D,
 }
 
 struct Game {
     level: GameLevel,
     textures: GameTextures,
+    player_pos: (usize, usize),
 }
 
 impl Game {
@@ -125,12 +136,24 @@ impl Game {
             ),
         };
 
-        println!("Level size: {}x{} cells", level.width, level.height);
+        let mut player_pos = (0, 0);
+        for row in 0..level.height {
+            for col in 0..level.width {
+                if let Some(c) = level.get_cell(row, col) {
+                    if c == '@' || c == '+' {
+                        player_pos = (row, col);
+                    }
+                }
+            }
+        }
+
+        println!("Level size: {}x{} cells, player pos: {} {}", level.width, level.height, player_pos.0, player_pos.1);
         println!("{} {}", textures.wall.width(), textures.wall.height());
 
         Self {
             level,
             textures,
+            player_pos,
         }
     }
 
@@ -140,9 +163,9 @@ impl Game {
     }
 
     fn render(&self) {
-        for y in 0..self.level.height {
-            for x in 0..self.level.width {
-                if let Some(cell_char) = self.level.get_cell(x, y) {
+        for row in 0..self.level.height {
+            for col in 0..self.level.width {
+                if let Some(cell_char) = self.level.get_cell(row, col) {
                     let cell_texture = match cell_char {
                         '#' => &self.textures.wall,
                         '.' => &self.textures.floor,
@@ -156,8 +179,8 @@ impl Game {
                     
                     draw_texture_ex(
                         cell_texture,
-                        LEVEL_SCREEN_POS_X + x as f32 * self.textures.wall.width() * 1.5,
-                        LEVEL_SCREEN_POS_Y + y as f32 * self.textures.wall.height() * 1.5,
+                        LEVEL_SCREEN_POS_X + col as f32 * self.textures.wall.width() * 1.5,
+                        LEVEL_SCREEN_POS_Y + row as f32 * self.textures.wall.height() * 1.5,
                         WHITE,
                         DrawTextureParams {
                             dest_size: Some(Vec2::new(
@@ -172,20 +195,16 @@ impl Game {
         }
     }
 
+    fn move_left(&mut self) {
+        //
+        println!("{}", self.level.width);
+    }
+
+
     fn update(&mut self) {
         // TODO: Add game update logic (player movement, box pushing, etc.)
     }
 
-}
-
-struct GameTextures {
-    wall: Texture2D,
-    floor: Texture2D,
-    target: Texture2D,
-    crate_texture: Texture2D,
-    crate_on_target: Texture2D,
-    player: Texture2D,
-    player_on_target: Texture2D,
 }
 
 #[macroquad::main("Sokoban")]
@@ -206,7 +225,8 @@ async fn main() {
         clear_background(WHITE);
 
         if is_key_pressed(KeyCode::Left) {
-            println!("Left");  // TODO
+            println!("Left");
+            game.move_left();
         }
 
         if is_key_pressed(KeyCode::Right) {
