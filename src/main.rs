@@ -72,8 +72,8 @@ impl GameLevel {
         Ok(())
     }
 
-    fn is_valid_position(&self, row: usize, col: usize) -> bool {
-        col < self.width && row < self.height
+    fn is_valid_position(&self, row: isize, col: isize) -> bool {
+        return col >= 0 && col < (self.width as isize) && row >= 0 && row < (self.height as isize);
     }
 }
 
@@ -97,7 +97,7 @@ enum Direction {
 
 impl Direction {
     // (offset_row, offset_col)
-    pub fn to_offset(&self) -> (i32, i32) {
+    pub fn to_offset(&self) -> (isize, isize) {
         match self {
             Direction::Left => (0, -1),
             Direction::Right => (0, 1),
@@ -226,7 +226,36 @@ impl Game {
 
     fn make_move(&mut self, dir: Direction) {
         println!("{:?}", dir);
-        // TODO
+        let prev_pos = self.player_pos;
+        let cell_prev_pos = self.level.get_cell(prev_pos.0, prev_pos.1).unwrap();
+        let offset = dir.to_offset();
+        let next_pos = (self.player_pos.0 as isize + offset.0, self.player_pos.1 as isize + offset.1);
+        if !self.level.is_valid_position(next_pos.0, next_pos.1) {
+            return;
+        }
+        let next_pos = (next_pos.0 as usize, next_pos.1 as usize);
+        let cell_next_pos = self.level.get_cell(next_pos.0, next_pos.1).unwrap();
+        match cell_next_pos {
+            '.' => {
+                // TODO
+            },
+            _ => {},
+        }
+        // match dir {
+        //     Direction::Left => {
+
+        //     },
+        //     Direction::Right => {
+
+        //     },
+        //     Direction::Down => {
+
+        //     },
+        //     Direction::Up => {
+
+        //     },
+        //     _ => {},
+        // }
     }
 
 
