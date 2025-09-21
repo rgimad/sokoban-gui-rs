@@ -52,7 +52,9 @@ impl GameLevel {
         }
     }
 
-    fn get_cell(&self, row: usize, col: usize) -> Option<char> {
+    fn get_cell(&self, rowcol: (usize, usize)) -> Option<char> {
+        let row = rowcol.0;
+        let col = rowcol.1;
         if col < self.width && row < self.height {
             self.data[row].chars().nth(col)
         } else {
@@ -60,7 +62,9 @@ impl GameLevel {
         }
     }
 
-    fn set_cell(&mut self, row: usize, col: usize, cell: char) -> Result<(), &'static str> {
+    fn set_cell(&mut self, rowcol: (usize, usize), cell: char) -> Result<(), &'static str> {
+        let row = rowcol.0;
+        let col = rowcol.1;
         if col >= self.width || row >= self.height {
             return Err("Coordinates out of bounds");
         }
@@ -72,7 +76,9 @@ impl GameLevel {
         Ok(())
     }
 
-    fn is_valid_position(&self, row: isize, col: isize) -> bool {
+    fn is_valid_position(&self, rowcol: (isize, isize)) -> bool {
+        let row = rowcol.0;
+        let col = rowcol.1;
         return col >= 0 && col < (self.width as isize) && row >= 0 && row < (self.height as isize);
     }
 }
@@ -168,7 +174,7 @@ impl Game {
         let mut player_pos = (0, 0);
         for row in 0..level.height {
             for col in 0..level.width {
-                if let Some(c) = level.get_cell(row, col) {
+                if let Some(c) = level.get_cell((row, col)) {
                     if c == '@' || c == '+' {
                         player_pos = (row, col);
                     }
@@ -194,7 +200,7 @@ impl Game {
     fn render(&self) {
         for row in 0..self.level.height {
             for col in 0..self.level.width {
-                if let Some(cell_char) = self.level.get_cell(row, col) {
+                if let Some(cell_char) = self.level.get_cell((row, col)) {
                     let cell_texture = match cell_char {
                         '#' => &self.textures.wall,
                         '.' => &self.textures.floor,
@@ -227,26 +233,35 @@ impl Game {
     fn make_move(&mut self, dir: Direction) {
         // println!("{:?}", dir);
         let prev_pos = self.player_pos;
-        let cell_prev_pos = self.level.get_cell(prev_pos.0, prev_pos.1).unwrap();
+        let cell_prev_pos = self.level.get_cell(prev_pos).unwrap();
         let offset = dir.to_offset();
         let next_pos = (self.player_pos.0 as isize + offset.0, self.player_pos.1 as isize + offset.1);
-        if !self.level.is_valid_position(next_pos.0, next_pos.1) {
+        if !self.level.is_valid_position(next_pos) {
             return;
         }
         let next_pos = (next_pos.0 as usize, next_pos.1 as usize);
-        let cell_next_pos = self.level.get_cell(next_pos.0, next_pos.1).unwrap();
+        let cell_next_pos = self.level.get_cell(next_pos).unwrap();
         match cell_next_pos {
             '.' => {
-                self.level.set_cell(next_pos.0, next_pos.1, '@').unwrap();
-                self.level.set_cell(prev_pos.0, prev_pos.1, if cell_prev_pos == '@' {'.'} else {'~'}).unwrap();
+                self.level.set_cell(next_pos, '@').unwrap();
+                self.level.set_cell(prev_pos, if cell_prev_pos == '@' {'.'} else {'~'}).unwrap();
                 self.player_pos = next_pos;
             },
             '~' => {
-                self.level.set_cell(next_pos.0, next_pos.1, '+').unwrap();
-                self.level.set_cell(prev_pos.0, prev_pos.1, if cell_prev_pos == '@' {'.'} else {'~'}).unwrap();
+                self.level.set_cell(next_pos, '+').unwrap();
+                self.level.set_cell(prev_pos, if cell_prev_pos == '@' {'.'} else {'~'}).unwrap();
                 self.player_pos = next_pos;
             },
-            // TODO
+            '$' => {
+                let box_next_pos = (self.player_pos.0 as isize + offset.0*2, self.player_pos.1 as isize + offset.1*2);
+                if !self.level.is_valid_position(box_next_pos) {
+                    return;
+                }
+                // TODO
+            },
+            '*' => {
+                // TODO
+            },
             _ => {},
         }
         
