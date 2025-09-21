@@ -225,7 +225,7 @@ impl Game {
     }
 
     fn make_move(&mut self, dir: Direction) {
-        println!("{:?}", dir);
+        // println!("{:?}", dir);
         let prev_pos = self.player_pos;
         let cell_prev_pos = self.level.get_cell(prev_pos.0, prev_pos.1).unwrap();
         let offset = dir.to_offset();
@@ -235,55 +235,21 @@ impl Game {
         }
         let next_pos = (next_pos.0 as usize, next_pos.1 as usize);
         let cell_next_pos = self.level.get_cell(next_pos.0, next_pos.1).unwrap();
-        match cell_prev_pos {
-            '@' => {
-                match cell_next_pos {
-                    '.' => {
-                        self.level.set_cell(next_pos.0, next_pos.1, '@').unwrap();
-                        self.level.set_cell(prev_pos.0, prev_pos.1, '.').unwrap();
-                        self.player_pos = next_pos;
-                    },
-                    '~' => {
-                        self.level.set_cell(next_pos.0, next_pos.1, '+').unwrap();
-                        self.level.set_cell(prev_pos.0, prev_pos.1, '.').unwrap();
-                        self.player_pos = next_pos;
-                    },
-                    _ => {},
-                }
+        match cell_next_pos {
+            '.' => {
+                self.level.set_cell(next_pos.0, next_pos.1, '@').unwrap();
+                self.level.set_cell(prev_pos.0, prev_pos.1, if cell_prev_pos == '@' {'.'} else {'~'}).unwrap();
+                self.player_pos = next_pos;
             },
-            '+' => {
-                match cell_next_pos {
-                    '.' => {
-                        self.level.set_cell(next_pos.0, next_pos.1, '@').unwrap();
-                        self.level.set_cell(prev_pos.0, prev_pos.1, '~').unwrap();
-                        self.player_pos = next_pos;
-                    },
-                    '~' => {
-                        self.level.set_cell(next_pos.0, next_pos.1, '+').unwrap();
-                        self.level.set_cell(prev_pos.0, prev_pos.1, '~').unwrap();
-                        self.player_pos = next_pos;
-                    },
-                    _ => {},
-                }
+            '~' => {
+                self.level.set_cell(next_pos.0, next_pos.1, '+').unwrap();
+                self.level.set_cell(prev_pos.0, prev_pos.1, if cell_prev_pos == '@' {'.'} else {'~'}).unwrap();
+                self.player_pos = next_pos;
             },
+            // TODO
             _ => {},
         }
         
-        // match dir {
-        //     Direction::Left => {
-
-        //     },
-        //     Direction::Right => {
-
-        //     },
-        //     Direction::Down => {
-
-        //     },
-        //     Direction::Up => {
-
-        //     },
-        //     _ => {},
-        // }
     }
 
 
@@ -313,22 +279,18 @@ async fn main() {
         clear_background(WHITE);
 
         if is_key_pressed(KeyCode::Left) {
-            // println!("Left");
             game.make_move(Direction::Left);
         }
 
         if is_key_pressed(KeyCode::Right) {
-            // println!("Right"); // TODO
             game.make_move(Direction::Right);
         }
 
         if is_key_pressed(KeyCode::Down) {
-            // println!("Down"); // TODO
             game.make_move(Direction::Down);
         }
 
         if is_key_pressed(KeyCode::Up) {
-            // println!("Up"); // TODO
             game.make_move(Direction::Up);
         }
 
