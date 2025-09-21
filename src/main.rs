@@ -132,9 +132,10 @@ impl Game {
     fn new() -> Self {
         let default_level_data = string_vec![
             "#######",
-            "#~....#",
-            "#.$...#",
-            "#.@...#",
+            "#~..$~#",
+            "#..~..#",
+            "#.$.$.#",
+            "#.@.$~#",
             "#######"
         ];
 
@@ -252,15 +253,22 @@ impl Game {
                 self.level.set_cell(prev_pos, if cell_prev_pos == '@' {'.'} else {'~'}).unwrap();
                 self.player_pos = next_pos;
             },
-            '$' => {
+            '$' | '*' => {
                 let box_next_pos = (self.player_pos.0 as isize + offset.0*2, self.player_pos.1 as isize + offset.1*2);
                 if !self.level.is_valid_position(box_next_pos) {
                     return;
                 }
-                // TODO
-            },
-            '*' => {
-                // TODO
+                let box_next_pos = (box_next_pos.0 as usize, box_next_pos.1 as usize);
+                let cell_box_next_pos = self.level.get_cell(box_next_pos).unwrap();
+                match cell_box_next_pos {
+                    '.' | '~' => {
+                        self.level.set_cell(box_next_pos, if cell_box_next_pos == '.' {'$'} else {'*'}).unwrap();
+                        self.level.set_cell(next_pos, if cell_next_pos == '$' {'@'} else {'+'}).unwrap();
+                        self.level.set_cell(prev_pos, if cell_prev_pos == '@' {'.'} else {'~'}).unwrap();
+                        self.player_pos = next_pos;
+                    },
+                    _ => {}
+                }
             },
             _ => {},
         }
