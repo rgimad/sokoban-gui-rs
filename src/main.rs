@@ -87,6 +87,35 @@ struct GameTextures {
     player_on_target: Texture2D,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Direction {
+    Left,
+    Right,
+    Up,
+    Down,
+}
+
+impl Direction {
+    // (offset_row, offset_col)
+    pub fn to_offset(&self) -> (i32, i32) {
+        match self {
+            Direction::Left => (0, -1),
+            Direction::Right => (0, 1),
+            Direction::Up => (-1, 0),
+            Direction::Down => (1, 0),
+        }
+    }
+    
+    pub fn invert(&self) -> Direction {
+        match self {
+            Direction::Left => Direction::Right,
+            Direction::Right => Direction::Left,
+            Direction::Up => Direction::Down,
+            Direction::Down => Direction::Up,
+        }
+    }
+}
+
 struct Game {
     level: GameLevel,
     textures: GameTextures,
@@ -195,17 +224,19 @@ impl Game {
         }
     }
 
-    fn move_left(&mut self) {
-        //
-        println!("{}", self.level.width);
+    fn make_move(&mut self, dir: Direction) {
+        println!("{:?}", dir);
+        // TODO
     }
 
 
-    fn update(&mut self) {
-        // TODO: Add game update logic (player movement, box pushing, etc.)
-    }
+    // fn update(&mut self) {
+    //     // is it really needed?
+    // }
 
 }
+
+// TODO: IDEAS: make background not pure white but seiled with some gray brick like pattern? 
 
 #[macroquad::main("Sokoban")]
 async fn main() {
@@ -225,23 +256,26 @@ async fn main() {
         clear_background(WHITE);
 
         if is_key_pressed(KeyCode::Left) {
-            println!("Left");
-            game.move_left();
+            // println!("Left");
+            game.make_move(Direction::Left);
         }
 
         if is_key_pressed(KeyCode::Right) {
-            println!("Right"); // TODO
+            // println!("Right"); // TODO
+            game.make_move(Direction::Right);
         }
 
         if is_key_pressed(KeyCode::Down) {
-            println!("Down"); // TODO
+            // println!("Down"); // TODO
+            game.make_move(Direction::Down);
         }
 
         if is_key_pressed(KeyCode::Up) {
-            println!("Up"); // TODO
+            // println!("Up"); // TODO
+            game.make_move(Direction::Up);
         }
 
-        game.update();
+        // game.update();
         game.render();
         
         next_frame().await;
