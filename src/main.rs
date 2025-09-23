@@ -213,8 +213,8 @@ impl Game {
                         WHITE,
                         DrawTextureParams {
                             dest_size: Some(Vec2::new(
-                                self.textures.wall.width() * 1.5,
-                                self.textures.wall.height() * 1.5,
+                                self.textures.background.width() * 1.5,
+                                self.textures.background.height() * 1.5,
                             )),
                             ..Default::default()
                         },
@@ -304,8 +304,6 @@ impl Game {
     // }
 
 }
-
-// TODO: IDEAS: make background not pure white but seiled with some gray brick like pattern? 
 
 #[macroquad::main("Sokoban")]
 async fn main() {
