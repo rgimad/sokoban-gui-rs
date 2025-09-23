@@ -205,7 +205,7 @@ impl Game {
     fn _adjust_window_size(&self) {
         set_window_size(
             (self.level.width * (self.textures.wall.width()*TEXTURE_SCALE_COEF) as usize + LEVEL_SCREEN_POS_X*2) as u32,
-            (self.level.height * (self.textures.wall.height()*TEXTURE_SCALE_COEF) as usize + LEVEL_SCREEN_POS_Y*2) as u32
+            (self.level.height * (self.textures.wall.height()*TEXTURE_SCALE_COEF) as usize + LEVEL_SCREEN_POS_Y*2  + if cfg!(target_os = "macos") {25} else {0}) as u32
         );
     }
 
@@ -317,7 +317,16 @@ impl Game {
 
 }
 
-#[macroquad::main("Sokoban")]
+fn window_config() -> Conf {
+    Conf {
+        window_title: "Sokoban".to_string(),
+        window_width: 50,
+        window_height: 50,
+        ..Default::default()
+    }
+}
+
+#[macroquad::main(window_config)]
 async fn main() {
     let mut game = Game::new();
 
