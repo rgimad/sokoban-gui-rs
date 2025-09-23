@@ -2,7 +2,7 @@
 #![allow(unused_variables)]
 #![allow(dead_code)]
 
-use macroquad::prelude::*;
+use macroquad::{miniquad::window::set_window_size, prelude::*};
 
 /*
     # - wall
@@ -20,8 +20,9 @@ macro_rules! string_vec {
     };
 }
 
-const LEVEL_SCREEN_POS_X: f32 = 50.0;
-const LEVEL_SCREEN_POS_Y: f32 = 70.0;
+const LEVEL_SCREEN_POS_X: usize = 50;
+const LEVEL_SCREEN_POS_Y: usize = 40;
+const TEXTURE_SCALE_COEF: f32 = 1.5;
 
 struct GameLevel {
     data: Vec<String>,
@@ -189,17 +190,28 @@ impl Game {
         }
 
         println!("Level size: {}x{} cells, player pos: {} {}", level.width, level.height, player_pos.0, player_pos.1);
-        println!("{} {}", textures.wall.width(), textures.wall.height());
+        //println!("{} {}", textures.wall.width(), textures.wall.height());
 
-        Self {
+        let instance = Self {
             level,
             textures,
             player_pos,
-        }
+        };
+
+        instance._adjust_window_size();
+        instance
+    }
+
+    fn _adjust_window_size(&self) {
+        set_window_size(
+            (self.level.width * (self.textures.wall.width()*TEXTURE_SCALE_COEF) as usize + LEVEL_SCREEN_POS_X*2) as u32,
+            (self.level.height * (self.textures.wall.height()*TEXTURE_SCALE_COEF) as usize + LEVEL_SCREEN_POS_Y*2) as u32
+        );
     }
 
     fn load_level(&mut self, level_data: Vec<String>) {
         self.level = GameLevel::new(level_data);
+        self._adjust_window_size();
         println!("Loaded new level: {}x{} cells", self.level.width, self.level.height);
     }
 
@@ -208,13 +220,13 @@ impl Game {
             for col in 0..50 {
                 draw_texture_ex(
                         &self.textures.background,
-                        col as f32 * self.textures.wall.width() * 1.5,
-                        row as f32 * self.textures.wall.height() * 1.5,
+                        col as f32 * self.textures.wall.width() * TEXTURE_SCALE_COEF,
+                        row as f32 * self.textures.wall.height() * TEXTURE_SCALE_COEF,
                         WHITE,
                         DrawTextureParams {
                             dest_size: Some(Vec2::new(
-                                self.textures.background.width() * 1.5,
-                                self.textures.background.height() * 1.5,
+                                self.textures.background.width() * TEXTURE_SCALE_COEF,
+                                self.textures.background.height() * TEXTURE_SCALE_COEF,
                             )),
                             ..Default::default()
                         },
@@ -238,13 +250,13 @@ impl Game {
                     
                     draw_texture_ex(
                         cell_texture,
-                        LEVEL_SCREEN_POS_X + col as f32 * self.textures.wall.width() * 1.5,
-                        LEVEL_SCREEN_POS_Y + row as f32 * self.textures.wall.height() * 1.5,
+                        LEVEL_SCREEN_POS_X as f32 + col as f32 * self.textures.wall.width() * TEXTURE_SCALE_COEF,
+                        LEVEL_SCREEN_POS_Y as f32 + row as f32 * self.textures.wall.height() * TEXTURE_SCALE_COEF,
                         WHITE,
                         DrawTextureParams {
                             dest_size: Some(Vec2::new(
-                                self.textures.wall.width() * 1.5,
-                                self.textures.wall.height() * 1.5,
+                                self.textures.wall.width() * TEXTURE_SCALE_COEF,
+                                self.textures.wall.height() * TEXTURE_SCALE_COEF,
                             )),
                             ..Default::default()
                         },
