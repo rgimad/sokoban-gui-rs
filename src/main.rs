@@ -91,6 +91,7 @@ struct GameTextures {
     crate_on_target: Texture2D,
     player: Texture2D,
     player_on_target: Texture2D,
+    background: Texture2D,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -170,6 +171,10 @@ impl Game {
                 include_bytes!("../assets/sprites/lager-20-worker-docked.png"),
                 None,
             ),
+            background: Texture2D::from_file_with_format(
+                include_bytes!("../assets/sprites/background.png"),
+                None,
+            ), 
         };
 
         let mut player_pos = (0, 0);
@@ -199,6 +204,24 @@ impl Game {
     }
 
     fn render(&self) {
+        for row in 0..50 {
+            for col in 0..50 {
+                draw_texture_ex(
+                        &self.textures.background,
+                        col as f32 * self.textures.wall.width() * 1.5,
+                        row as f32 * self.textures.wall.height() * 1.5,
+                        WHITE,
+                        DrawTextureParams {
+                            dest_size: Some(Vec2::new(
+                                self.textures.wall.width() * 1.5,
+                                self.textures.wall.height() * 1.5,
+                            )),
+                            ..Default::default()
+                        },
+                    );
+            }
+        }
+
         for row in 0..self.level.height {
             for col in 0..self.level.width {
                 if let Some(cell_char) = self.level.get_cell((row, col)) {
