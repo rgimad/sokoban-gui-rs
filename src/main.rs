@@ -284,6 +284,9 @@ impl Game {
                 }
             }
         }
+        //println!("Boxes: {}/{}", self.boxes_on_target, self.boxes_total);
+        let status_text = format!("Boxes {}/{}", self.boxes_on_target, self.boxes_total);
+        draw_text(&status_text, LEVEL_SCREEN_POS_X as f32, LEVEL_SCREEN_POS_Y as f32/2.0, 28.0, BLUE);
     }
 
     fn make_move(&mut self, dir: Direction) {
@@ -317,7 +320,7 @@ impl Game {
                 let cell_box_next_pos = self.level.get_cell(box_next_pos).unwrap();
                 match cell_box_next_pos {
                     '.' | '~' => {
-                        self.level.set_cell(box_next_pos, if cell_box_next_pos == '.' {'$'} else {'*'}).unwrap();
+                        self.level.set_cell(box_next_pos, if cell_box_next_pos == '.' {if cell_next_pos != '$' {self.boxes_on_target -= 1;} '$'} else {if cell_next_pos != '*' {self.boxes_on_target += 1;} '*'}).unwrap();
                         self.level.set_cell(next_pos, if cell_next_pos == '$' {'@'} else {'+'}).unwrap();
                         self.level.set_cell(prev_pos, if cell_prev_pos == '@' {'.'} else {'~'}).unwrap();
                         self.player_pos = next_pos;
