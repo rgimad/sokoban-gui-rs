@@ -31,7 +31,16 @@ struct GameLevel {
 }
 
 impl GameLevel {
-    fn new(level_data: Vec<String>) -> Self {
+
+    fn new() -> Self {
+        Self {
+            data: Vec::<String>::new(),
+            width: 0,
+            height: 0,
+        }
+    }
+
+    fn from(level_data: Vec<String>) -> Self {
         let height = level_data.len();
         let width = if height > 0 {
             level_data[0].len()
@@ -132,17 +141,6 @@ struct Game {
 
 impl Game {
     fn new() -> Self {
-        let default_level_data = string_vec![
-            "#######",
-            "#~..$~#",
-            "#..~..#",
-            "#.$.$.#",
-            "#.@.$~#",
-            "#######"
-        ];
-
-        let level = GameLevel::new(default_level_data);
-
         let textures = GameTextures {
             wall: Texture2D::from_file_with_format(
                 include_bytes!("../assets/sprites/lager-20-wall.png"),
@@ -178,28 +176,24 @@ impl Game {
             ), 
         };
 
-        let mut player_pos = (0, 0);
-        for row in 0..level.height {
-            for col in 0..level.width {
-                if let Some(c) = level.get_cell((row, col)) {
+        Self {
+            level: GameLevel::new(),
+            textures,
+            player_pos: (0, 0),
+        }
+    }
+
+    fn get_initial_player_pos(&self) -> Option<(usize, usize)> {
+        for row in 0..self.level.height {
+            for col in 0..self.level.width {
+                if let Some(c) = self.level.get_cell((row, col)) {
                     if c == '@' || c == '+' {
-                        player_pos = (row, col);
+                        return Some((row, col));
                     }
                 }
             }
         }
-
-        println!("Level size: {}x{} cells, player pos: {} {}", level.width, level.height, player_pos.0, player_pos.1);
-        //println!("{} {}", textures.wall.width(), textures.wall.height());
-
-        let instance = Self {
-            level,
-            textures,
-            player_pos,
-        };
-
-        instance._adjust_window_size();
-        instance
+        None
     }
 
     fn _adjust_window_size(&self) {
@@ -210,7 +204,8 @@ impl Game {
     }
 
     fn load_level(&mut self, level_data: Vec<String>) {
-        self.level = GameLevel::new(level_data);
+        self.level = GameLevel::from(level_data);
+        self.player_pos = self.get_initial_player_pos().unwrap();
         self._adjust_window_size();
         println!("Loaded new level: {}x{} cells", self.level.width, self.level.height);
     }
@@ -329,16 +324,16 @@ fn window_config() -> Conf {
 #[macroquad::main(window_config)]
 async fn main() {
     let mut game = Game::new();
-
-    // Example of loading a different level
-    // let new_level = string_vec![
-    //     "########",
-    //     "#.~.~..#",
-    //     "#.$$$$.#",
-    //     "#.@....#",
-    //     "########"
-    // ];
-    // game.load_level(new_level);
+    game.load_level(
+        string_vec![
+            "#######",
+            "#~..$~#",
+            "#..~..#",
+            "#.$.$.#",
+            "#.@.$~#",
+            "#######"
+        ]
+    );
 
     loop {
         clear_background(WHITE);
