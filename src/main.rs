@@ -183,17 +183,17 @@ impl Game {
         }
     }
 
-    fn get_initial_player_pos(&self) -> Option<(usize, usize)> {
+    fn get_initial_player_pos(&self) -> Result<(usize, usize), &'static str> {
         for row in 0..self.level.height {
             for col in 0..self.level.width {
                 if let Some(c) = self.level.get_cell((row, col)) {
                     if c == '@' || c == '+' {
-                        return Some((row, col));
+                        return Ok((row, col));
                     }
                 }
             }
         }
-        None
+        Err("Player not found on level map")
     }
 
     fn _adjust_window_size(&self) {
