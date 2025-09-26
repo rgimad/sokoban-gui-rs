@@ -137,6 +137,8 @@ struct Game {
     level: GameLevel,
     textures: GameTextures,
     player_pos: (usize, usize),
+    boxes_total: usize,
+    boxes_on_target: usize,
 }
 
 impl Game {
@@ -180,6 +182,8 @@ impl Game {
             level: GameLevel::new(),
             textures,
             player_pos: (0, 0),
+            boxes_total: 0,
+            boxes_on_target: 0,
         }
     }
 
@@ -196,6 +200,26 @@ impl Game {
         Err("Player not found on level map")
     }
 
+    fn get_boxes_count(&self) -> (usize, usize) {
+        let mut total = 0usize;
+        let mut on_target = 0usize;
+        for row in 0..self.level.height {
+            for col in 0..self.level.width {
+                match self.level.get_cell((row, col)) {
+                    Some('$') => {
+                        total += 1;
+                    },
+                    Some('*') => {
+                        total += 1;
+                        on_target += 1;
+                    },
+                    _ => {},
+                }
+            }
+        }
+        (total, on_target)
+    }
+
     fn _adjust_window_size(&self) {
         set_window_size(
             (self.level.width * (self.textures.wall.width()*TEXTURE_SCALE_COEF) as usize + LEVEL_SCREEN_POS_X*2) as u32,
@@ -207,7 +231,8 @@ impl Game {
         self.level = GameLevel::from(level_data);
         self.player_pos = self.get_initial_player_pos().unwrap();
         self._adjust_window_size();
-        println!("Loaded new level: {}x{} cells", self.level.width, self.level.height);
+        (self.boxes_total, self.boxes_on_target) = self.get_boxes_count();
+        println!("Loaded new level: {}x{} cells, boxes total: {}, boxes on target: {}", self.level.width, self.level.height, self.boxes_total, self.boxes_on_target);
     }
 
     fn render(&self) {
@@ -328,7 +353,7 @@ async fn main() {
         string_vec![
             "#######",
             "#~..$~#",
-            "#..~..#",
+            "#.*~..#",
             "#.$.$.#",
             "#.@.$~#",
             "#######"
