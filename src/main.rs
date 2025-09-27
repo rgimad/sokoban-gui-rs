@@ -139,6 +139,7 @@ struct Game {
     player_pos: (usize, usize),
     boxes_total: usize,
     boxes_on_target: usize,
+    moves: usize,
 }
 
 impl Game {
@@ -184,6 +185,7 @@ impl Game {
             player_pos: (0, 0),
             boxes_total: 0,
             boxes_on_target: 0,
+            moves: 0,
         }
     }
 
@@ -232,6 +234,7 @@ impl Game {
         self.player_pos = self.get_initial_player_pos().unwrap();
         self._adjust_window_size();
         (self.boxes_total, self.boxes_on_target) = self.get_boxes_count();
+        self.moves = 0;
         println!("Loaded new level: {}x{} cells, boxes total: {}, boxes on target: {}", self.level.width, self.level.height, self.boxes_total, self.boxes_on_target);
     }
 
@@ -284,9 +287,9 @@ impl Game {
                 }
             }
         }
-        let level_status = format!("Level:{}", 0);
-        let boxes_status = format!("Boxes:{}/{}", self.boxes_on_target, self.boxes_total);
-        let moves_status = format!("Moves:{}", 0);
+        let level_status = format!("Level: {}", 0);
+        let boxes_status = format!("Boxes: {}/{}", self.boxes_on_target, self.boxes_total);
+        let moves_status = format!("Moves: {}", self.moves);
         draw_text(&level_status, LEVEL_SCREEN_POS_X as f32, LEVEL_SCREEN_POS_Y as f32/3.0, 24.0, BLUE);
         draw_text(&boxes_status, LEVEL_SCREEN_POS_X as f32, LEVEL_SCREEN_POS_Y as f32/3.0 + 20.0, 24.0, BLUE);
         draw_text(&moves_status, LEVEL_SCREEN_POS_X as f32, LEVEL_SCREEN_POS_Y as f32/3.0 + 40.0, 24.0, BLUE);
@@ -308,11 +311,13 @@ impl Game {
                 self.level.set_cell(next_pos, '@').unwrap();
                 self.level.set_cell(prev_pos, if cell_prev_pos == '@' {'.'} else {'~'}).unwrap();
                 self.player_pos = next_pos;
+                self.moves += 1;
             },
             '~' => {
                 self.level.set_cell(next_pos, '+').unwrap();
                 self.level.set_cell(prev_pos, if cell_prev_pos == '@' {'.'} else {'~'}).unwrap();
                 self.player_pos = next_pos;
+                self.moves += 1;
             },
             '$' | '*' => {
                 let box_next_pos = (self.player_pos.0 as isize + offset.0*2, self.player_pos.1 as isize + offset.1*2);
@@ -327,6 +332,7 @@ impl Game {
                         self.level.set_cell(next_pos, if cell_next_pos == '$' {'@'} else {'+'}).unwrap();
                         self.level.set_cell(prev_pos, if cell_prev_pos == '@' {'.'} else {'~'}).unwrap();
                         self.player_pos = next_pos;
+                        self.moves += 1;
                     },
                     _ => {}
                 }
