@@ -21,7 +21,7 @@ macro_rules! string_vec {
 }
 
 const LEVEL_SCREEN_POS_X: usize = 50;
-const LEVEL_SCREEN_POS_Y: usize = 40;
+const LEVEL_SCREEN_POS_Y: usize = 80;
 const TEXTURE_SCALE_COEF: f32 = 1.5;
 
 struct GameLevel {
@@ -223,7 +223,7 @@ impl Game {
     fn _adjust_window_size(&self) {
         set_window_size(
             (self.level.width * (self.textures.wall.width()*TEXTURE_SCALE_COEF) as usize + LEVEL_SCREEN_POS_X*2) as u32,
-            (self.level.height * (self.textures.wall.height()*TEXTURE_SCALE_COEF) as usize + LEVEL_SCREEN_POS_Y*2  + if cfg!(target_os = "macos") {25} else {0}) as u32
+            (self.level.height * (self.textures.wall.height()*TEXTURE_SCALE_COEF) as usize + LEVEL_SCREEN_POS_Y*3/2  + if cfg!(target_os = "macos") {25} else {0}) as u32
         );
     }
 
@@ -284,9 +284,12 @@ impl Game {
                 }
             }
         }
-        //println!("Boxes: {}/{}", self.boxes_on_target, self.boxes_total);
-        let status_text = format!("Boxes {}/{}", self.boxes_on_target, self.boxes_total);
-        draw_text(&status_text, LEVEL_SCREEN_POS_X as f32, LEVEL_SCREEN_POS_Y as f32/2.0, 28.0, BLUE);
+        let level_status = format!("Level:{}", 0);
+        let boxes_status = format!("Boxes:{}/{}", self.boxes_on_target, self.boxes_total);
+        let moves_status = format!("Moves:{}", 0);
+        draw_text(&level_status, LEVEL_SCREEN_POS_X as f32, LEVEL_SCREEN_POS_Y as f32/3.0, 24.0, BLUE);
+        draw_text(&boxes_status, LEVEL_SCREEN_POS_X as f32, LEVEL_SCREEN_POS_Y as f32/3.0 + 20.0, 24.0, BLUE);
+        draw_text(&moves_status, LEVEL_SCREEN_POS_X as f32, LEVEL_SCREEN_POS_Y as f32/3.0 + 40.0, 24.0, BLUE);
     }
 
     fn make_move(&mut self, dir: Direction) {
