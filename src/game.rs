@@ -1,4 +1,5 @@
 use macroquad::{miniquad::window::set_window_size, prelude::*};
+use macroquad::ui::{hash, root_ui};
 use crate::level::GameLevel;
 use crate::textures::GameTextures;
 use crate::direction::Direction;
@@ -10,10 +11,11 @@ pub struct Game {
     pub boxes_total: usize,
     pub boxes_on_target: usize,
     pub moves: usize,
+    cb_idx: usize,
 }
 
 const LEVEL_SCREEN_POS_X: usize = 50;
-const LEVEL_SCREEN_POS_Y: usize = 80;
+const LEVEL_SCREEN_POS_Y: usize = 50;
 const TEXTURE_SCALE_COEF: f32 = 1.5;
 
 impl Game {
@@ -25,6 +27,7 @@ impl Game {
             boxes_total: 0,
             boxes_on_target: 0,
             moves: 0,
+            cb_idx: 0,
         }
     }
 
@@ -77,7 +80,7 @@ impl Game {
         println!("Loaded new level: {}x{} cells, boxes total: {}, boxes on target: {}", self.level.width, self.level.height, self.boxes_total, self.boxes_on_target);
     }
 
-    pub fn render(&self) {
+    pub fn render(&mut self) {
         for row in 0..50 {
             for col in 0..50 {
                 draw_texture_ex(
@@ -126,12 +129,13 @@ impl Game {
                 }
             }
         }
-        let level_status = format!("Level: {}", 0);
-        let boxes_status = format!("Boxes: {}/{}", self.boxes_on_target, self.boxes_total);
-        let moves_status = format!("Moves: {}", self.moves);
-        draw_text(&level_status, LEVEL_SCREEN_POS_X as f32, LEVEL_SCREEN_POS_Y as f32/3.0, 24.0, BLUE);
-        draw_text(&boxes_status, LEVEL_SCREEN_POS_X as f32, LEVEL_SCREEN_POS_Y as f32/3.0 + 20.0, 24.0, BLUE);
-        draw_text(&moves_status, LEVEL_SCREEN_POS_X as f32, LEVEL_SCREEN_POS_Y as f32/3.0 + 40.0, 24.0, BLUE);
+        // draw_text(&level_status, LEVEL_SCREEN_POS_X as f32, LEVEL_SCREEN_POS_Y as f32/3.0, 24.0, BLUE);
+        // draw_text(&boxes_status, LEVEL_SCREEN_POS_X as f32, LEVEL_SCREEN_POS_Y as f32/3.0 + 20.0, 24.0, BLUE);
+        // draw_text(&moves_status, LEVEL_SCREEN_POS_X as f32, LEVEL_SCREEN_POS_Y as f32/3.0 + 40.0, 24.0, BLUE);
+        root_ui().combo_box(hash!(), "Level", &["opt 1", "opt 2", "opt 3", "opt 4"], &mut self.cb_idx);
+        let status = format!("Boxes: {}/{}  Moves: {}", self.boxes_on_target, self.boxes_total, self.moves);
+        root_ui().label(None, &status);
+        
     }
 
     pub fn make_move(&mut self, dir: Direction) {
