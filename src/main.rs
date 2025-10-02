@@ -14,6 +14,7 @@ use game::Game;
 /*
     # - wall
     . - floor
+    , - background
     $ - box
     ~ - target
     @ - player
@@ -41,6 +42,7 @@ async fn main() {
     let mut game = Game::new();
     game.load_level(
         string_vec![
+            "##,,,##",
             "#######",
             "#~..$~#",
             "#..~..#",

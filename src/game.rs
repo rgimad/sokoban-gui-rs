@@ -105,6 +105,7 @@ impl Game {
                     let cell_texture = match cell_char {
                         '#' => &self.textures.wall,
                         '.' => &self.textures.floor,
+                        ',' => &self.textures.background,
                         '~' => &self.textures.target,
                         '$' => &self.textures.crate_texture,
                         '*' => &self.textures.crate_on_target,
