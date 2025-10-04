@@ -42,29 +42,7 @@ fn window_config() -> Conf {
 #[macroquad::main(window_config)]
 async fn main() {
     let mut game = Game::new();
-    game.load_level(game.levels_config.get_level(0).unwrap().data.clone());
-    // game.load_level(
-    //     // string_vec![
-    //     //     "##,,,##",
-    //     //     "#######",
-    //     //     "#~..$~#",
-    //     //     "#..~..#",
-    //     //     "#.$.$.#",
-    //     //     "#.@.$~#",
-    //     //     "#######"
-    //     // ]
-    //     string_vec![
-    //         ",,,,#####",
-    //         ",,,,#..@#",
-    //         "###,#$$.#",
-    //         "#~#,#.$.#",
-    //         "#~###.###",
-    //         "#~.....#,",
-    //         "#..#...#,",
-    //         "####...#,",
-    //         ",,,#####,"
-    //     ]
-    // );
+    game.load_level(game.levels_config.get_level(1).unwrap().data.clone()); // TODO load it ctor curr level
 
     loop {
         clear_background(WHITE);

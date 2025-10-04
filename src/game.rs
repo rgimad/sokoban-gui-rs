@@ -140,12 +140,8 @@ impl Game {
         // draw_text(&boxes_status, LEVEL_SCREEN_POS_X as f32, LEVEL_SCREEN_POS_Y as f32/3.0 + 20.0, 24.0, BLUE);
         // draw_text(&moves_status, LEVEL_SCREEN_POS_X as f32, LEVEL_SCREEN_POS_Y as f32/3.0 + 40.0, 24.0, BLUE);
         //root_ui().combo_box(hash!(), "Level", &["opt 1", "opt 2", "opt 3", "opt 4"], &mut self.cb_idx);
-        //let level_names = (&self.levels_config.level_names[0..self.save_data.get_current_level()]).iter().map(|l| l.as_str()).collect();
-        let x = &self.levels_config.level_names[0..self.save_data.get_current_level() + 1];
-        let y: Vec<&str> = x.iter().map(|l| l.as_str()).collect();
-        let z: &[&str] = &y; 
-        // TODO FIXME refcator this shit with x y z !!
-        root_ui().combo_box(hash!(), "Level", &y, &mut self.cb_idx);
+        let level_names_str: Vec<&str> = (&self.levels_config.level_names[0..self.save_data.get_current_level() + 1]).iter().map(|l| l.as_str()).collect();
+        root_ui().combo_box(hash!(), "Level", &level_names_str, &mut self.cb_idx);
         let status = format!("Boxes: {}/{}  Moves: {}", self.boxes_on_target, self.boxes_total, self.moves);
         root_ui().label(None, &status);
         
