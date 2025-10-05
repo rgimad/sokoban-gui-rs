@@ -5,7 +5,7 @@ const SAVE_FILE: &str = "sokoban_save.dat";
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct SaveData {
-    current_level: usize,
+    max_unlocked_level: usize,
 }
 
 impl SaveData {
@@ -34,19 +34,16 @@ impl SaveData {
     pub fn save(&self) -> Result<(), Box<dyn std::error::Error>> {
         let json = serde_json::to_string_pretty(self)?;
         fs::write(SAVE_FILE, json)?;
-        println!("Game saved to {} (level: {})", SAVE_FILE, self.current_level);
+        //println!(" saved to {} (level: {})", SAVE_FILE, self.max_unlocked_level);
         Ok(())
     }
 
-    pub fn set_current_level(&mut self, level_index: usize) {
-        self.current_level = level_index;
-    }
-
-    pub fn save_current_level(&mut self, level_index: usize) {
+    pub fn set_max_unlocked_level(&mut self, level_index: usize) {
+        self.max_unlocked_level = level_index;
         let _ = self.save();
     }
 
-    pub fn get_current_level(&self) -> usize {
-        self.current_level
+    pub fn get_max_unlocked_level(&self) -> usize {
+        self.max_unlocked_level
     }
 }
