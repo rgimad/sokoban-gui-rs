@@ -22,7 +22,11 @@ impl LevelsConfig {
         let config: LevelsConfigInternal = serde_json::from_slice(levels_bytes).unwrap();
         
         Self {
-            level_names: config.levels.iter().map(|level| level.name.clone()).collect(),
+            level_names: config.levels
+            .iter()
+            .enumerate()
+            .map(|(index, level)| format!("{}. {}", index + 1, level.name))
+            .collect(),
             levels: config
         }
     }

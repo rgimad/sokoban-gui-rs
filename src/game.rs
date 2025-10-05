@@ -24,7 +24,7 @@ const TEXTURE_SCALE_COEF: f32 = 1.5;
 
 impl Game {
     pub fn new() -> Self {
-        Self {
+        let mut instance = Self {
             level: GameLevel::new(),
             textures: GameTextures::new(),
             levels_config: LevelsConfig::new(),
@@ -34,7 +34,10 @@ impl Game {
             boxes_on_target: 0,
             moves: 0,
             cb_idx: 0,
-        }
+        };
+        instance.load_level(instance.levels_config.get_level(instance.save_data.get_current_level()).unwrap().data.clone());
+        instance.cb_idx = instance.save_data.get_current_level();
+        instance
     }
 
     fn get_initial_player_pos(&self) -> Result<(usize, usize), &'static str> {
