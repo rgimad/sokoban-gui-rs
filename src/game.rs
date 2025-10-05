@@ -21,7 +21,7 @@ pub struct Game {
 }
 
 const LEVEL_SCREEN_POS_X: usize = 50;
-const LEVEL_SCREEN_POS_Y: usize = 50;
+const LEVEL_SCREEN_POS_Y: usize = 80;
 const TEXTURE_SCALE_COEF: f32 = 1.5;
 
 impl Game {
@@ -39,8 +39,6 @@ impl Game {
             cb_idx: 0,
             cb_idx_old: 0,
         };
-        //instance.load_level(instance.levels_config.get_level(instance.save_data.get_max_unlocked_level()).unwrap().data.clone());
-        //instance.cb_idx = instance.current_level_index;
         instance.switch_to_level(instance.save_data.get_max_unlocked_level());
         instance
     }
@@ -91,7 +89,7 @@ impl Game {
         self.adjust_window_size();
         (self.boxes_total, self.boxes_on_target) = self.get_boxes_count();
         self.moves = 0;
-        println!("Loaded new level: {}x{} cells, boxes total: {}, boxes on target: {}", self.level.width, self.level.height, self.boxes_total, self.boxes_on_target);
+        //println!("Loaded new level: {}x{} cells, boxes total: {}, boxes on target: {}", self.level.width, self.level.height, self.boxes_total, self.boxes_on_target);
     }
 
     pub fn render(&mut self) {
@@ -153,11 +151,21 @@ impl Game {
         }
         let status = format!("Boxes: {}/{}  Moves: {}", self.boxes_on_target, self.boxes_total, self.moves);
         root_ui().label(None, &status);
+
+        if root_ui().button(None, "Restart level") {
+            self.switch_to_level(self.current_level_index);
+        }
+        root_ui().same_line(0.0);
+        root_ui().label(None, "  ");
+        root_ui().same_line(0.0);
+        if root_ui().button(None, "New game") {
+            self.save_data.set_max_unlocked_level(0);
+            self.switch_to_level(0);
+        }
         
     }
 
     pub fn make_move(&mut self, dir: Direction) {
-        // println!("{:?}", dir);
         let prev_pos = self.player_pos;
         let cell_prev_pos = self.level.get_cell(prev_pos).unwrap();
         let offset = dir.to_offset();
