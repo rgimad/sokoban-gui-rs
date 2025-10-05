@@ -16,6 +16,7 @@ pub struct Game {
     pub boxes_on_target: usize,
     pub moves: usize,
     cb_idx: usize,
+    cb_idx_old: usize,
 }
 
 const LEVEL_SCREEN_POS_X: usize = 50;
@@ -34,6 +35,7 @@ impl Game {
             boxes_on_target: 0,
             moves: 0,
             cb_idx: 0,
+            cb_idx_old: 0,
         };
         instance.load_level(instance.levels_config.get_level(instance.save_data.get_current_level()).unwrap().data.clone());
         instance.cb_idx = instance.save_data.get_current_level();
@@ -143,8 +145,14 @@ impl Game {
         // draw_text(&boxes_status, LEVEL_SCREEN_POS_X as f32, LEVEL_SCREEN_POS_Y as f32/3.0 + 20.0, 24.0, BLUE);
         // draw_text(&moves_status, LEVEL_SCREEN_POS_X as f32, LEVEL_SCREEN_POS_Y as f32/3.0 + 40.0, 24.0, BLUE);
         //root_ui().combo_box(hash!(), "Level", &["opt 1", "opt 2", "opt 3", "opt 4"], &mut self.cb_idx);
-        let level_names_str: Vec<&str> = (&self.levels_config.level_names[0..self.save_data.get_current_level() + 1]).iter().map(|l| l.as_str()).collect();
+        // FIXME TODO: view only unlocked levels (up to saved max level. TODO make save manager store current level and max saved level)
+        let level_names_str: Vec<&str> = (&self.levels_config.level_names[0..3]).iter().map(|l| l.as_str()).collect();
         root_ui().combo_box(hash!(), "Level", &level_names_str, &mut self.cb_idx);
+        if self.cb_idx != self.cb_idx_old {
+            self.cb_idx_old = self.cb_idx;
+            println!("You chose  {} level", self.cb_idx);
+            self.switch_to_level(self.cb_idx);
+        }
         let status = format!("Boxes: {}/{}  Moves: {}", self.boxes_on_target, self.boxes_total, self.moves);
         root_ui().label(None, &status);
         
@@ -194,7 +202,30 @@ impl Game {
             },
             _ => {},
         }
-        
+        self.check_win();
+    }
+
+    fn switch_to_level(&mut self, new_level_idx: usize) {
+        if new_level_idx < self.levels_config.total_levels() {
+            self.save_data.set_current_level(new_level_idx);
+            self.moves = 0;
+            self.boxes_on_target = 0;
+            self.boxes_total = 0;
+            self.load_level(self.levels_config.get_level(self.save_data.get_current_level()).unwrap().data.clone());
+            self.cb_idx = self.save_data.get_current_level();
+            self.cb_idx_old = self.cb_idx;
+        } // NOTE else what?
+    }
+
+    fn check_win(&mut self) {
+        if self.boxes_on_target == self.boxes_total {
+            // win level !
+            let next_lvl = self.save_data.get_current_level() + 1;
+            if next_lvl < self.levels_config.total_levels() {
+                self.switch_to_level(next_lvl);
+                self.save_data.save_current_level(next_lvl); // save progress on completed levels
+            } // else: turns out all levels have been completed
+        }
     }
 
 

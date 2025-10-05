@@ -40,6 +40,9 @@ impl SaveData {
 
     pub fn set_current_level(&mut self, level_index: usize) {
         self.current_level = level_index;
+    }
+
+    pub fn save_current_level(&mut self, level_index: usize) {
         let _ = self.save();
     }
 
