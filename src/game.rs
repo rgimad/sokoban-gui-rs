@@ -146,7 +146,6 @@ impl Game {
         root_ui().combo_box(hash!(), "Level", &level_names_str, &mut self.cb_idx);
         if self.cb_idx != self.cb_idx_old {
             self.cb_idx_old = self.cb_idx;
-            println!("You chose  {} level", self.cb_idx);
             self.switch_to_level(self.cb_idx);
         }
         let status = format!("Boxes: {}/{}  Moves: {}", self.boxes_on_target, self.boxes_total, self.moves);

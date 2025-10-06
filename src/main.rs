@@ -24,11 +24,11 @@ use game::Game;
     + - player on target
 */
 
-macro_rules! string_vec {
-    ($($x:expr),* $(,)?) => {
-        vec![$($x.to_string()),*]
-    };
-}
+// macro_rules! string_vec {
+//     ($($x:expr),* $(,)?) => {
+//         vec![$($x.to_string()),*]
+//     };
+// } 
 
 fn window_config() -> Conf {
     Conf {
