@@ -18,6 +18,7 @@ pub struct Game {
     current_level_index: usize,
     cb_idx: usize,
     cb_idx_old: usize,
+    game_completed: bool,
 }
 
 const LEVEL_SCREEN_POS_X: usize = 50;
@@ -38,6 +39,7 @@ impl Game {
             current_level_index: 0,
             cb_idx: 0,
             cb_idx_old: 0,
+            game_completed: false,
         };
         instance.switch_to_level(instance.save_data.get_max_unlocked_level());
         instance
@@ -81,15 +83,6 @@ impl Game {
             (self.level.width * (self.textures.wall.width()*TEXTURE_SCALE_COEF) as usize + LEVEL_SCREEN_POS_X*2) as u32,
             (self.level.height * (self.textures.wall.height()*TEXTURE_SCALE_COEF) as usize + LEVEL_SCREEN_POS_Y*3/2  + if cfg!(target_os = "macos") {25} else {0}) as u32
         );
-    }
-
-    pub fn load_level(&mut self, level_data: Vec<String>) {
-        self.level = GameLevel::from(level_data);
-        self.player_pos = self.get_initial_player_pos().unwrap();
-        self.adjust_window_size();
-        (self.boxes_total, self.boxes_on_target) = self.get_boxes_count();
-        self.moves = 0;
-        //println!("Loaded new level: {}x{} cells, boxes total: {}, boxes on target: {}", self.level.width, self.level.height, self.boxes_total, self.boxes_on_target);
     }
 
     pub fn render(&mut self) {
@@ -161,6 +154,10 @@ impl Game {
             self.save_data.set_max_unlocked_level(0);
             self.switch_to_level(0);
         }
+
+        if self.game_completed {
+            draw_text("GAME COMPLETED!", LEVEL_SCREEN_POS_X as f32 * 0.8, LEVEL_SCREEN_POS_Y as f32, 28.0, BLUE);
+        }
         
     }
 
@@ -213,10 +210,12 @@ impl Game {
     fn switch_to_level(&mut self, new_level_idx: usize) {
         if new_level_idx < self.levels_config.total_levels() {
             self.current_level_index = new_level_idx;
+            self.level = GameLevel::from(self.levels_config.get_level(self.current_level_index).unwrap().data.clone());
+            self.player_pos = self.get_initial_player_pos().unwrap();
+            self.adjust_window_size();
+            (self.boxes_total, self.boxes_on_target) = self.get_boxes_count();
             self.moves = 0;
-            self.boxes_on_target = 0;
-            self.boxes_total = 0;
-            self.load_level(self.levels_config.get_level(self.current_level_index).unwrap().data.clone());
+            self.game_completed = false;
             self.cb_idx = self.current_level_index;
             self.cb_idx_old = self.cb_idx;
         } // NOTE else what?
@@ -226,12 +225,15 @@ impl Game {
         if self.boxes_on_target == self.boxes_total {
             // win level !
             let next_lvl = self.current_level_index + 1;
+            //println!("{} {}", next_lvl, self.levels_config.total_levels());
             if next_lvl < self.levels_config.total_levels() {
                 self.switch_to_level(next_lvl);
                 if next_lvl > self.save_data.get_max_unlocked_level() {
                     self.save_data.set_max_unlocked_level(next_lvl); // save progress on completed levels
                 }
-            } // else: turns out all levels have been completed
+            } else {
+                self.game_completed = true;
+            }
         }
     }
 }
