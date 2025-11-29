@@ -3,10 +3,11 @@ name: CI/CD
 on:
   push:
     branches: [ main, master ]
+    tags: [ 'v*' ]  # Trigger on version tags too
   pull_request:
     branches: [ main, master ]
   release:
-    types: [ published ]
+    types: [ published, created ]
 
 env:
   CARGO_NET_GIT_FETCH_WITH_CLI: true
@@ -16,11 +17,20 @@ jobs:
     name: Build for Windows x64
     runs-on: windows-latest
     
+    # Only build for tags on the release job
+    if: github.event_name != 'pull_request' || startsWith(github.ref, 'refs/tags/')
+    
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
+
+    - name: Debug event info
+      run: |
+        echo "Event: ${{ github.event_name }}"
+        echo "Ref: ${{ github.ref }}"
+        echo "Tag: ${{ github.ref_name }}"
 
     - name: Get short commit hash
       id: hash
@@ -36,33 +46,40 @@ jobs:
     - name: Build release binary
       run: cargo build --release --target x86_64-pc-windows-msvc
 
-    - name: Rename binary with commit hash
-      run: |
-        $exeFile = Get-ChildItem "target\x86_64-pc-windows-msvc\release\*.exe" | Select-Object -First 1
-        $newName = "sokoban-gui-${{ steps.hash.outputs.short }}.exe"
-        Copy-Item $exeFile.FullName "target\x86_64-pc-windows-msvc\release\$newName"
-        echo "Renamed to: $newName"
-
     - name: Upload binary artifact
       uses: actions/upload-artifact@v4
       with:
         name: sokoban-gui-${{ steps.hash.outputs.short }}
-        path: target/x86_64-pc-windows-msvc/release/sokoban-gui-${{ steps.hash.outputs.short }}.exe
+        path: target/x86_64-pc-windows-msvc/release/*.exe
         retention-days: 30
 
   release:
-    name: Create Release
+    name: Create Release Assets
     runs-on: ubuntu-latest
-    if: github.event_name == 'release' && github.event.action == 'published'
+    # Trigger on both release events AND tag pushes
+    if: |
+      github.event_name == 'release' && github.event.action == 'published' ||
+      startsWith(github.ref, 'refs/tags/')
     
     needs: build
     
     steps:
+    - name: Debug event info
+      run: |
+        echo "Event: ${{ github.event_name }}"
+        echo "Action: ${{ github.event.action }}"
+        echo "Ref: ${{ github.ref }}"
+        echo "Tag: ${{ github.ref_name }}"
+        echo "Full event:"
+        echo '${{ toJSON(github.event) }}'
+
     - name: Get release version
       id: version
       run: |
-        VERSION="${GITHUB_REF#refs/tags/}"
+        # Use the tag name as version
+        VERSION="${{ github.ref_name }}"
         echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "Using version: $VERSION"
 
     - name: Download artifact
       uses: actions/download-artifact@v4
@@ -70,16 +87,34 @@ jobs:
         pattern: sokoban-gui-*
         path: ./dist
 
-    - name: Rename for release
+    - name: List downloaded files
       run: |
-        mv ./dist/sokoban-gui-*.exe ./dist/sokoban-gui-${{ steps.version.outputs.version }}-windows-x64.exe
+        echo "Downloaded files:"
+        find ./dist -type f | while read file; do
+          echo "Found: $file"
+        done
+
+    - name: Prepare release asset
+      run: |
+        # Find the binary file
+        EXE_FILE=$(find ./dist -name "*.exe" -type f | head -1)
+        if [ -z "$EXE_FILE" ]; then
+          echo "Error: No .exe file found in dist directory!"
+          echo "Contents of dist directory:"
+          ls -la ./dist/
+          find ./dist -type f
+          exit 1
+        fi
+        
+        NEW_NAME="sokoban-gui-${{ steps.version.outputs.version }}-windows-x64.exe"
+        cp "$EXE_FILE" "./$NEW_NAME"
+        echo "Created release asset: $NEW_NAME"
 
     - name: Upload to release
       uses: svenstaro/upload-release-action@v2
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: ./dist/sokoban-gui-${{ steps.version.outputs.version }}-windows-x64.exe
+        file: sokoban-gui-${{ steps.version.outputs.version }}-windows-x64.exe
         asset_name: sokoban-gui-${{ steps.version.outputs.version }}-windows-x64.exe
-        tag: ${{ github.ref }}
+        tag: ${{ github.ref_name }}
         overwrite: true
-        
