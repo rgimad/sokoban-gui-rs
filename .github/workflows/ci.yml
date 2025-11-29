@@ -3,11 +3,11 @@ name: CI/CD
 on:
   push:
     branches: [ main, master ]
-    tags: [ 'v*' ]  # Trigger on version tags too
+    tags: [ 'v*' ]
   pull_request:
     branches: [ main, master ]
   release:
-    types: [ published, created ]
+    types: [ published ]
 
 env:
   CARGO_NET_GIT_FETCH_WITH_CLI: true
@@ -17,20 +17,11 @@ jobs:
     name: Build for Windows x64
     runs-on: windows-latest
     
-    # Only build for tags on the release job
-    if: github.event_name != 'pull_request' || startsWith(github.ref, 'refs/tags/')
-    
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
-
-    - name: Debug event info
-      run: |
-        echo "Event: ${{ github.event_name }}"
-        echo "Ref: ${{ github.ref }}"
-        echo "Tag: ${{ github.ref_name }}"
 
     - name: Get short commit hash
       id: hash
@@ -46,75 +37,84 @@ jobs:
     - name: Build release binary
       run: cargo build --release --target x86_64-pc-windows-msvc
 
+    - name: Find and display binary
+      run: |
+        echo "Built files:"
+        ls -la target/x86_64-pc-windows-msvc/release/
+        # Get the actual binary name
+        for file in target/x86_64-pc-windows-msvc/release/*.exe; do
+          echo "Found binary: $file"
+          echo "binary_name=$(basename $file)" >> $GITHUB_ENV
+        done
+
     - name: Upload binary artifact
       uses: actions/upload-artifact@v4
       with:
-        name: sokoban-gui-${{ steps.hash.outputs.short }}
+        name: windows-binary-${{ steps.hash.outputs.short }}
         path: target/x86_64-pc-windows-msvc/release/*.exe
         retention-days: 30
 
   release:
     name: Create Release Assets
     runs-on: ubuntu-latest
-    # Trigger on both release events AND tag pushes
-    if: |
-      github.event_name == 'release' && github.event.action == 'published' ||
-      startsWith(github.ref, 'refs/tags/')
+    if: github.event_name == 'release' && github.event.action == 'published'
     
     needs: build
     
     steps:
-    - name: Debug event info
-      run: |
-        echo "Event: ${{ github.event_name }}"
-        echo "Action: ${{ github.event.action }}"
-        echo "Ref: ${{ github.ref }}"
-        echo "Tag: ${{ github.ref_name }}"
-        echo "Full event:"
-        echo '${{ toJSON(github.event) }}'
-
     - name: Get release version
       id: version
       run: |
-        # Use the tag name as version
         VERSION="${{ github.ref_name }}"
         echo "version=$VERSION" >> $GITHUB_OUTPUT
         echo "Using version: $VERSION"
 
-    - name: Download artifact
+    - name: Download ALL artifacts
       uses: actions/download-artifact@v4
       with:
-        pattern: sokoban-gui-*
-        path: ./dist
+        path: ./artifacts
 
-    - name: List downloaded files
+    - name: Debug artifacts structure
       run: |
-        echo "Downloaded files:"
-        find ./dist -type f | while read file; do
-          echo "Found: $file"
+        echo "=== Artifacts structure ==="
+        find ./artifacts -type f | while read file; do
+          echo "File: $file"
         done
+        echo "=== Contents of artifacts directory ==="
+        ls -la ./artifacts/
+        echo "=== Recursive search for .exe files ==="
+        find ./artifacts -name "*.exe" -type f
 
-    - name: Prepare release asset
+    - name: Find and prepare binary
       run: |
-        # Find the binary file
-        EXE_FILE=$(find ./dist -name "*.exe" -type f | head -1)
+        # Find any .exe file in the artifacts
+        EXE_FILE=$(find ./artifacts -name "*.exe" -type f | head -1)
+        
         if [ -z "$EXE_FILE" ]; then
-          echo "Error: No .exe file found in dist directory!"
-          echo "Contents of dist directory:"
-          ls -la ./dist/
-          find ./dist -type f
+          echo "ERROR: No .exe file found in artifacts!"
+          echo "Available files:"
+          find ./artifacts -type f
           exit 1
         fi
         
+        echo "Found binary: $EXE_FILE"
+        
+        # Create dist directory
+        mkdir -p ./dist
+        
+        # Copy and rename the binary
         NEW_NAME="sokoban-gui-${{ steps.version.outputs.version }}-windows-x64.exe"
-        cp "$EXE_FILE" "./$NEW_NAME"
-        echo "Created release asset: $NEW_NAME"
+        cp "$EXE_FILE" "./dist/$NEW_NAME"
+        echo "Created: ./dist/$NEW_NAME"
+        
+        # Verify it exists
+        ls -la "./dist/$NEW_NAME"
 
     - name: Upload to release
       uses: svenstaro/upload-release-action@v2
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: sokoban-gui-${{ steps.version.outputs.version }}-windows-x64.exe
+        file: ./dist/sokoban-gui-${{ steps.version.outputs.version }}-windows-x64.exe
         asset_name: sokoban-gui-${{ steps.version.outputs.version }}-windows-x64.exe
         tag: ${{ github.ref_name }}
         overwrite: true
