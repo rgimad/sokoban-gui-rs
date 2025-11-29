@@ -3,7 +3,6 @@ name: CI/CD
 on:
   push:
     branches: [ main, master ]
-    tags: [ 'v*' ]
   pull_request:
     branches: [ main, master ]
   release:
@@ -20,13 +19,6 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-
-    - name: Get short commit hash
-      id: hash
-      run: |
-        echo "short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
     - name: Install Rust
       uses: actions-rust-lang/setup-rust-toolchain@v1
@@ -37,84 +29,36 @@ jobs:
     - name: Build release binary
       run: cargo build --release --target x86_64-pc-windows-msvc
 
-    - name: Find and display binary
-      run: |
-        echo "Built files:"
-        ls -la target/x86_64-pc-windows-msvc/release/
-        # Get the actual binary name
-        for file in target/x86_64-pc-windows-msvc/release/*.exe; do
-          echo "Found binary: $file"
-          echo "binary_name=$(basename $file)" >> $GITHUB_ENV
-        done
-
     - name: Upload binary artifact
       uses: actions/upload-artifact@v4
       with:
-        name: windows-binary-${{ steps.hash.outputs.short }}
+        name: windows-x64-binary
         path: target/x86_64-pc-windows-msvc/release/*.exe
         retention-days: 30
 
   release:
-    name: Create Release Assets
+    name: Create Release
     runs-on: ubuntu-latest
     if: github.event_name == 'release' && github.event.action == 'published'
     
     needs: build
     
     steps:
-    - name: Get release version
-      id: version
-      run: |
-        VERSION="${{ github.ref_name }}"
-        echo "version=$VERSION" >> $GITHUB_OUTPUT
-        echo "Using version: $VERSION"
-
-    - name: Download ALL artifacts
+    - name: Download Windows binary
       uses: actions/download-artifact@v4
       with:
-        path: ./artifacts
+        name: windows-x64-binary
+        path: ./dist
 
-    - name: Debug artifacts structure
-      run: |
-        echo "=== Artifacts structure ==="
-        find ./artifacts -type f | while read file; do
-          echo "File: $file"
-        done
-        echo "=== Contents of artifacts directory ==="
-        ls -la ./artifacts/
-        echo "=== Recursive search for .exe files ==="
-        find ./artifacts -name "*.exe" -type f
+    - name: Display structure of downloaded files
+      run: ls -R ./dist/
 
-    - name: Find and prepare binary
-      run: |
-        # Find any .exe file in the artifacts
-        EXE_FILE=$(find ./artifacts -name "*.exe" -type f | head -1)
-        
-        if [ -z "$EXE_FILE" ]; then
-          echo "ERROR: No .exe file found in artifacts!"
-          echo "Available files:"
-          find ./artifacts -type f
-          exit 1
-        fi
-        
-        echo "Found binary: $EXE_FILE"
-        
-        # Create dist directory
-        mkdir -p ./dist
-        
-        # Copy and rename the binary
-        NEW_NAME="sokoban-gui-${{ steps.version.outputs.version }}-windows-x64.exe"
-        cp "$EXE_FILE" "./dist/$NEW_NAME"
-        echo "Created: ./dist/$NEW_NAME"
-        
-        # Verify it exists
-        ls -la "./dist/$NEW_NAME"
-
-    - name: Upload to release
+    - name: Upload to Release
       uses: svenstaro/upload-release-action@v2
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: ./dist/sokoban-gui-${{ steps.version.outputs.version }}-windows-x64.exe
-        asset_name: sokoban-gui-${{ steps.version.outputs.version }}-windows-x64.exe
-        tag: ${{ github.ref_name }}
+        file: ./dist/*.exe
+        asset_name: ${{ github.event.repository.name }}-windows-x64.exe
+        tag: ${{ github.ref }}
         overwrite: true
+        
