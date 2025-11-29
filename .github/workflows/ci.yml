@@ -19,6 +19,12 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Get short commit hash
+      id: hash
+      run: echo "short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
     - name: Install Rust
       uses: actions-rust-lang/setup-rust-toolchain@v1
@@ -29,10 +35,19 @@ jobs:
     - name: Build release binary
       run: cargo build --release --target x86_64-pc-windows-msvc
 
-    - name: Upload binary artifact
+    - name: Get binary info
+      id: binary
+      run: |
+        $exeFile = Get-ChildItem "target\x86_64-pc-windows-msvc\release\*.exe" | Select-Object -First 1
+        $binaryName = $exeFile.Name
+        $binaryBaseName = [System.IO.Path]::GetFileNameWithoutExtension($exeFile.Name)
+        echo "name=$binaryName" >> $env:GITHUB_OUTPUT
+        echo "basename=$binaryBaseName" >> $env:GITHUB_OUTPUT
+
+    - name: Upload binary artifact with commit hash
       uses: actions/upload-artifact@v4
       with:
-        name: windows-x64-binary
+        name: ${{ steps.binary.outputs.basename }}-${{ steps.hash.outputs.short }}
         path: target/x86_64-pc-windows-msvc/release/*.exe
         retention-days: 30
 
@@ -44,21 +59,59 @@ jobs:
     needs: build
     
     steps:
-    - name: Download Windows binary
+    - name: Get release version
+      id: version
+      run: |
+        # Extract version from tag (remove 'refs/tags/' prefix)
+        VERSION="${GITHUB_REF#refs/tags/}"
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "Using version: $VERSION"
+
+    - name: Get commit hash from build job
+      id: commit
+      run: echo "hash=${{ needs.build.outputs.commit_hash }}" >> $GITHUB_OUTPUT
+
+    - name: Download all artifacts
       uses: actions/download-artifact@v4
       with:
-        name: windows-x64-binary
-        path: ./dist
+        path: ./artifacts
 
-    - name: Display structure of downloaded files
-      run: ls -R ./dist/
+    - name: Prepare release assets
+      run: |
+        # Find the main binary (assuming it's the .exe file)
+        mkdir -p ./dist
+        BINARY_FILE=$(find ./artifacts -name "*.exe" -type f | head -1)
+        
+        if [ -n "$BINARY_FILE" ]; then
+          REPO_NAME="${GITHUB_REPOSITORY##*/}"
+          # Create versioned name
+          VERSIONED_NAME="${REPO_NAME}-${{ steps.version.outputs.version }}-windows-x64.exe"
+          cp "$BINARY_FILE" "./dist/$VERSIONED_NAME"
+          
+          # Also keep the commit-hash version for reference
+          COMMIT_NAME="${REPO_NAME}-${{ steps.version.outputs.version }}-${{ needs.build.outputs.commit_hash }}.exe"
+          cp "$BINARY_FILE" "./dist/$COMMIT_NAME"
+          
+          echo "Created assets:"
+          ls -la ./dist/
+        else
+          echo "Error: No binary file found in artifacts"
+          find ./artifacts -type f
+          exit 1
+        fi
 
-    - name: Upload to Release
+    - name: Upload versioned binary to release
       uses: svenstaro/upload-release-action@v2
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: ./dist/*.exe
-        asset_name: ${{ github.event.repository.name }}-windows-x64.exe
+        file: ./dist/*-${{ steps.version.outputs.version }}-windows-x64.exe
         tag: ${{ github.ref }}
         overwrite: true
-        
+
+    - name: Upload commit-hash binary to release
+      uses: svenstaro/upload-release-action@v2
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: ./dist/*-${{ steps.version.outputs.version }}-${{ needs.build.outputs.commit_hash }}.exe
+        tag: ${{ github.ref }}
+        overwrite: true
