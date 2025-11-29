@@ -24,7 +24,8 @@ jobs:
 
     - name: Get short commit hash
       id: hash
-      run: echo "short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+      run: |
+        echo "short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
     - name: Install Rust
       uses: actions-rust-lang/setup-rust-toolchain@v1
@@ -35,20 +36,18 @@ jobs:
     - name: Build release binary
       run: cargo build --release --target x86_64-pc-windows-msvc
 
-    - name: Get binary info
-      id: binary
+    - name: Rename binary with commit hash
       run: |
         $exeFile = Get-ChildItem "target\x86_64-pc-windows-msvc\release\*.exe" | Select-Object -First 1
-        $binaryName = $exeFile.Name
-        $binaryBaseName = [System.IO.Path]::GetFileNameWithoutExtension($exeFile.Name)
-        echo "name=$binaryName" >> $env:GITHUB_OUTPUT
-        echo "basename=$binaryBaseName" >> $env:GITHUB_OUTPUT
+        $newName = "sokoban-gui-${{ steps.hash.outputs.short }}.exe"
+        Copy-Item $exeFile.FullName "target\x86_64-pc-windows-msvc\release\$newName"
+        echo "Renamed to: $newName"
 
-    - name: Upload binary artifact with commit hash
+    - name: Upload binary artifact
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ steps.binary.outputs.basename }}-${{ steps.hash.outputs.short }}
-        path: target/x86_64-pc-windows-msvc/release/*.exe
+        name: sokoban-gui-${{ steps.hash.outputs.short }}
+        path: target/x86_64-pc-windows-msvc/release/sokoban-gui-${{ steps.hash.outputs.short }}.exe
         retention-days: 30
 
   release:
@@ -62,56 +61,25 @@ jobs:
     - name: Get release version
       id: version
       run: |
-        # Extract version from tag (remove 'refs/tags/' prefix)
         VERSION="${GITHUB_REF#refs/tags/}"
         echo "version=$VERSION" >> $GITHUB_OUTPUT
-        echo "Using version: $VERSION"
 
-    - name: Get commit hash from build job
-      id: commit
-      run: echo "hash=${{ needs.build.outputs.commit_hash }}" >> $GITHUB_OUTPUT
-
-    - name: Download all artifacts
+    - name: Download artifact
       uses: actions/download-artifact@v4
       with:
-        path: ./artifacts
+        pattern: sokoban-gui-*
+        path: ./dist
 
-    - name: Prepare release assets
+    - name: Rename for release
       run: |
-        # Find the main binary (assuming it's the .exe file)
-        mkdir -p ./dist
-        BINARY_FILE=$(find ./artifacts -name "*.exe" -type f | head -1)
+        mv ./dist/sokoban-gui-*.exe ./dist/sokoban-gui-${{ steps.version.outputs.version }}-windows-x64.exe
+
+    - name: Upload to release
+      uses: svenstaro/upload-release-action@v2
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: ./dist/sokoban-gui-${{ steps.version.outputs.version }}-windows-x64.exe
+        asset_name: sokoban-gui-${{ steps.version.outputs.version }}-windows-x64.exe
+        tag: ${{ github.ref }}
+        overwrite: true
         
-        if [ -n "$BINARY_FILE" ]; then
-          REPO_NAME="${GITHUB_REPOSITORY##*/}"
-          # Create versioned name
-          VERSIONED_NAME="${REPO_NAME}-${{ steps.version.outputs.version }}-windows-x64.exe"
-          cp "$BINARY_FILE" "./dist/$VERSIONED_NAME"
-          
-          # Also keep the commit-hash version for reference
-          COMMIT_NAME="${REPO_NAME}-${{ steps.version.outputs.version }}-${{ needs.build.outputs.commit_hash }}.exe"
-          cp "$BINARY_FILE" "./dist/$COMMIT_NAME"
-          
-          echo "Created assets:"
-          ls -la ./dist/
-        else
-          echo "Error: No binary file found in artifacts"
-          find ./artifacts -type f
-          exit 1
-        fi
-
-    - name: Upload versioned binary to release
-      uses: svenstaro/upload-release-action@v2
-      with:
-        repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: ./dist/*-${{ steps.version.outputs.version }}-windows-x64.exe
-        tag: ${{ github.ref }}
-        overwrite: true
-
-    - name: Upload commit-hash binary to release
-      uses: svenstaro/upload-release-action@v2
-      with:
-        repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: ./dist/*-${{ steps.version.outputs.version }}-${{ needs.build.outputs.commit_hash }}.exe
-        tag: ${{ github.ref }}
-        overwrite: true
