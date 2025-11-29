@@ -7,4 +7,3 @@ Yet another sokoban game written in Rust + macroquad.
 ### Credits:
  - Sprites from https://github.com/borgar/sokoban-skins/ 
  - Levels from https://borgar.net/programs/sokoban/#Intro 
-
